@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PXE Security | Sentinel Production v16.0</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Roboto+Mono:wght@500;700&display=swap');
+
+        :root {
+            --bg: #010409;
+            --card: rgba(13, 17, 23, 0.98);
+            --cyan: #00D1FF;
+            --gold: #FFD700;
+            --blue: #2563EB;
+            --alert: #FF003C;
+            --text: #F0F6FC;
+            --border: #30363d;
+            --header-h: 90px;
+        }
+
+        /* --- GLOBAL CORE --- */
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body, html {
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            background: var(--bg); color: var(--text);
+            font-family: 'Inter', sans-serif; overflow: hidden;
+        }
+
+        .pxe-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(0, 209, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 209, 255, 0.02) 1px, transparent 1px);
+            background-size: 35px 35px; pointer-events: none; z-index: -1;
+        }
+
+        /* --- MASTER HEADER --- */
+        .pxe-header {
+            position: fixed; top: 0; width: 100%; height: var(--header-h);
+            background: rgba(1, 4, 9, 0.95); backdrop-filter: blur(25px);
+            border-bottom: 2px solid var(--border); z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .badge {
+            padding: 10px 30px; border: 2px solid var(--gold);
+            background: #000; clip-path: polygon(15% 0%, 85% 0%, 100% 50%, 85% 100%, 15% 100%, 0% 50%);
+            box-shadow: 0 0 25px rgba(0, 209, 255, 0.3); text-align: center;
+        }
+        .pxe-main { font-weight: 900; font-size: 30px; letter-spacing: 5px; color: #fff; text-shadow: 0 0 15px var(--cyan); }
+        .pxe-sub { display: block; font-size: 9px; color: var(--gold); letter-spacing: 4px; margin-top: -5px; font-weight: bold; }
+
+        /* --- SCREEN ENGINE --- */
+        .pxe-viewport { position: relative; width: 100%; height: 100%; }
+        .screen {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100dvh;
+            flex-direction: column; padding: calc(var(--header-h) + 15px) 20px 40px 20px;
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+        }
+        .screen.active { display: flex; }
+
+        /* --- UI ELEMENTS --- */
+        .glass-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 15px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.2s; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-cyan { background: var(--cyan); color: #000; box-shadow: 0 0 20px rgba(0, 209, 255, 0.3); }
+        .btn-outline { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); }
+        .btn-selected { background: var(--cyan) !important; color: #000 !important; border: 2px solid var(--gold) !important; box-shadow: 0 0 25px var(--cyan); }
+        .btn-red { background: var(--alert); color: #fff; }
+
+        /* --- CONSOLE TABS --- */
+        .nav-bar { display: flex; gap: 4px; margin-bottom: 10px; flex-shrink: 0; }
+        .nav-item { flex: 1; padding: 12px 2px; background: #0d1117; border: 1px solid var(--border); color: #484f58; font-size: 8px; font-weight: 900; border-radius: 6px; text-align: center; }
+        .nav-item.active { background: var(--cyan); color: #000; border-color: var(--cyan); }
+
+        /* --- LOGGING --- */
+        .log-window { flex: 1; overflow-y: auto; padding: 15px; border-radius: 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--border); margin-bottom: 15px; }
+        .log-row { display: flex; gap: 12px; margin-bottom: 15px; border-bottom: 1px solid #21262d; padding-bottom: 10px; align-items: flex-start; }
+        .log-thumb { width: 55px; height: 40px; background: #161b22; border: 1px solid var(--cyan); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--cyan); font-weight: 900; }
+        .log-body { flex: 1; font-family: 'Roboto Mono', monospace; font-size: 11px; line-height: 1.5; }
+        .log-time { color: var(--cyan); font-weight: 700; }
+        .log-meta { font-size: 9px; color: var(--blue); display: block; margin-top: 5px; }
+
+        /* --- HUD --- */
+        .hud { background: #000; border-left: 4px solid var(--gold); padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .hud-val { font-family: 'Roboto Mono', monospace; font-size: 18px; font-weight: 700; color: var(--cyan); }
+        .hud-lbl { font-size: 8px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* --- FORM ELEMENTS --- */
+        .field { width: 100%; background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 15px; border-radius: 10px; margin-bottom: 15px; font-family: 'Roboto Mono'; font-size: 14px; }
+        .voice-btn { width: 40px; height: 40px; background: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-left: 10px; cursor: pointer; }
+        .report-section { display: none; }
+        .report-section.active { display: block; }
+
+        #pulse-warning { color: var(--gold); font-weight: 900; text-align: center; font-size: 12px; animation: flicker 0.8s infinite; display: none; margin-bottom: 8px; }
+        @keyframes flicker { 50% { opacity: 0.1; } }
+
+    </style>
+</head>
+<body>
+    <div class="pxe-grid"></div>
+
+    <header class="pxe-header">
+        <div class="badge">
+            <span class="pxe-main">PXE</span>
+            <span class="pxe-sub">SENTINEL COMMAND</span>
+        </div>
+    </header>
+
+    <div class="pxe-viewport">
+
+        <div id="login-screen" class="screen active" style="justify-content:center;">
+            <div class="glass-card" style="max-width: 360px; text-align: center;">
+                <div style="font-size: 10px; color: var(--cyan); letter-spacing: 3px; margin-bottom: 30px;">ENTERPRISE PRODUCTION v16.0</div>
+                <input type="text" id="user-id" placeholder="ID: MIL-774" class="field" style="text-align:center;">
+                <input type="text" id="user-pin" placeholder="PIN: 9999" class="field" style="text-align:center;">
+                <button class="btn btn-cyan" onclick="auth()">[ AUTHORIZE DEPLOYMENT ]</button>
+            </div>
+        </div>
+
+        <div id="gear-screen" class="screen">
+            <h2 style="color: var(--gold); margin-top: 0;">DUTY GEAR VERIFICATION</h2>
+            <div class="glass-card">
+                <div style="padding: 10px 0; border-bottom: 1px solid #21262d;"><input type="checkbox" id="g1"> <label for="g1">OFFICIAL PXE BADGE VISIBLE</label></div>
+                <div style="padding: 10px 0; border-bottom: 1px solid #21262d;"><input type="checkbox" id="g2"> <label for="g2">TACTICAL FLASHLIGHT CHARGED</label></div>
+                <div style="padding: 10px 0; border-bottom: 1px solid #21262d;"><input type="checkbox" id="g3"> <label for="g3">RADIO COMMS SYNCED</label></div>
+                <div style="padding: 10px 0;"><input type="checkbox" id="g4"> <label for="g4">BODY CAM STANDBY</label></div>
+            </div>
+            <button class="btn btn-cyan" onclick="gearConfirm()">CONFIRM & PROCEED</button>
+        </div>
+
+        <div id="hub-screen" class="screen">
+            <div class="hud">
+                <div><div class="hud-lbl">GLOBAL SESSION TIME</div><div id="hub-timer" class="hud-val">00:00:00</div></div>
+                <div style="text-align: right;"><div class="hud-lbl">STATUS</div><div style="color: var(--gold); font-weight: 900;">AUTHORIZED</div></div>
+            </div>
+            <div class="glass-card">
+                <div style="font-size: 12px; color: var(--cyan); font-weight: 900; margin-bottom: 15px;">ASSIGNMENT_LOCATOR</div>
+                <div id="site-list"></div>
+            </div>
+            <div class="glass-card">
+                <div style="font-size: 12px; color: var(--gold); font-weight: 900; margin-bottom: 10px;">SESSION MISSION LOG</div>
+                <div id="session-history" style="font-size: 10px; font-family: monospace; color: gray;">No history synced.</div>
+            </div>
+            <button class="btn btn-outline" style="border-color: var(--alert); color: var(--alert);" onclick="location.reload()">[ FULL LOGOUT ]</button>
+        </div>
+
+        <div id="console-screen" class="screen">
+            <div class="hud">
+                <div><div id="site-name-display" style="font-weight: 900; font-size: 14px; color: var(--cyan);">ASSET_LOCKED</div><div id="site-timer" class="hud-val" style="font-size: 12px;">00:00:00</div></div>
+                <div style="text-align: right;"><div class="hud-lbl">PULSE SYNC</div><div id="pulse-clock" class="hud-val">--:--</div></div>
+            </div>
+
+            <div class="nav-bar">
+                <div id="t-log" class="nav-item active" onclick="tab('log')">LOG</div>
+                <div id="t-reports" class="nav-item" onclick="tab('reports')">REPORTS</div>
+                <div id="t-sop" class="nav-item" onclick="tab('sop')">S.O.P.</div>
+                <div id="t-intel" class="nav-item" onclick="tab('intel')">INTEL</div>
+            </div>
+
+            <div id="pulse-warning">! VISUAL VERIFICATION REQUIRED !</div>
+
+            <div id="view-log" class="log-window" style="display:block;"><div id="console-log-box"></div></div>
+            
+            <div id="view-reports" class="log-window" style="display:none;">
+                <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+                    <button class="nav-item active" id="btn-inc" onclick="reportTab('inc')">INCIDENT</button>
+                    <button class="nav-item" id="btn-maint" onclick="reportTab('maint')">MAINT</button>
+                    <button class="nav-item" id="btn-park" onclick="reportTab('park')">PARKING</button>
+                </div>
+                
+                <div id="sec-inc" class="report-section active">
+                    <select class="field" id="inc-type"><option>Trespass</option><option>Vandalism</option><option>Burglary</option><option>Suspicious Subject</option></select>
+                    <textarea class="field" id="inc-desc" placeholder="Describe Incident... Use Voice icon to dictate." style="height:80px;"></textarea>
+                    <button class="btn btn-cyan" onclick="saveReport('Incident')">SAVE INCIDENT REPORT</button>
+                </div>
+                
+                <div id="sec-maint" class="report-section">
+                    <input class="field" id="maint-item" placeholder="Item (e.g. Graffiti, Light out)">
+                    <select class="field" id="maint-urgency"><option>Low</option><option>High - Immediate</option></select>
+                    <button class="btn btn-cyan" onclick="saveReport('Maintenance')">SAVE MAINTENANCE LOG</button>
+                </div>
+                
+                <div id="sec-park" class="report-section">
+                    <input class="field" id="park-plate" placeholder="Plate #">
+                    <input class="field" id="park-make" placeholder="Make/Model">
+                    <select class="field" id="park-violation"><option>No Permit</option><option>Fire Lane</option><option>Expired Tags</option></select>
+                    <button class="btn btn-cyan" onclick="saveReport('Parking')">SAVE PARKING VIOLATION</button>
+                </div>
+            </div>
+
+            <div id="view-sop" class="log-window" style="display:none;">
+                <h4 style="color:var(--cyan); margin:0;">POST ORDERS</h4>
+                <div style="font-size:11px; color:#aaa; line-height:1.7;">
+                    1. Conduct hourly perimeter sweep.<br>2. Check all entry locks via manual tug.<br>3. Report loitering immediately.<br>4. Geofence lock is active. Stay on property.
+                </div>
+            </div>
+
+            <div id="view-intel" class="log-window" style="display:none;"><div id="intel-body" style="font-size:11px;"></div></div>
+
+            <textarea id="manual-note" class="field" placeholder="Add optional manual note for log..." style="height:50px; border-color:var(--cyan);"></textarea>
+            <input type="file" id="camera-trigger" accept="image/*" capture="environment" style="display:none;" onchange="snapConfirm()">
+            <button class="btn btn-cyan" onclick="document.getElementById('camera-trigger').click()">AUTO-CAPTURE & AI NARRATE</button>
+            <button class="btn btn-outline" style="border-color: var(--alert); color: var(--alert);" onclick="exitReview()">EXTRACT & ARCHIVE MISSION</button>
+        </div>
+
+        <div id="review-screen" class="screen">
+            <h2 style="color: var(--cyan); margin-top: 0;">FINAL MISSION SUMMARY</h2>
+            <div class="glass-card" id="final-dar" style="height: 400px; overflow-y: auto; font-family: 'Times New Roman', serif; background: #fff; color: #000; padding: 30px;">
+                </div>
+            <button class="btn btn-cyan" onclick="vaultSync()">[ UPLOAD TO VAULT & HUB ]</button>
+            <button class="btn btn-outline" onclick="navigate('console-screen')">CANCEL EXTRACTION</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- MASTER STATE ---
+        let session = { role: 'patrol', shift: 'grave', gTime: 0, sTime: 0, pTime: 0, history: [], activeSite: null, reports: [] };
+        let timers = { g: null, s: null, p: null };
+
+        const SITES = {
+            patrol: [
+                {id:'CJ654', n:'Carls Jr 654', a:'North J Street Sacramento CA 95610', i:'High-vis patrol. Scan drive-thru perimeter.'},
+                {id:'SH1200', n:'Shell Gas 1200', a:'1200 Broadway, Sacramento CA 95818', i:'Monitor pump island and rear trash bin.'},
+                {id:'CHM800', n:'Citrus Heights Mall', a:'8000 Sunrise Blvd', i:'Check dark alcoves near vacant units.'}
+            ],
+            stationary: [
+                {id:'POST1', n:'Main Gate Post 01', a:'Restricted Entrance 1', i:'Verify all employee credentials.'}
+            ]
+        };
+
+        const AI_VOICE = ["Perimeter verified locked.", "Zone clear of loitering.", "Visual check: SECURE.", "GPS lock confirmed.", "Site integrity handshake successful.", "No anomalies detected."];
+
+        // --- CORE ENGINES ---
+        function navigate(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.getElementById(id).scrollTop = 0;
+        }
+
+        function auth() {
+            const id = document.getElementById('user-id').value.toUpperCase();
+            const pin = document.getElementById('user-pin').value;
+            if (id === 'MIL-774' && pin === '9999') { navigate('gear-screen'); startGlobalTimer(); }
+            else if (id === 'ADMIN-01' && pin === '8888') alert("Admin Uplink Active.");
+            else alert("AUTH FAILED");
+        }
+
+        function startGlobalTimer() {
+            timers.g = setInterval(() => {
+                session.gTime++;
+                let h = Math.floor(session.gTime/3600).toString().padStart(2,'0');
+                let m = Math.floor((session.gTime%3600)/60).toString().padStart(2,'0');
+                let s = (session.gTime%60).toString().padStart(2,'0');
+                document.getElementById('hub-timer').innerText = `${h}:${m}:${s}`;
+            }, 1000);
+        }
+
+        function gearConfirm() {
+            if(!document.getElementById('g1').checked || !document.getElementById('g2').checked) return alert("Verify core gear.");
+            renderHub();
+            navigate('hub-screen');
+        }
+
+        function renderHub() {
+            const list = document.getElementById('site-list');
+            list.innerHTML = '';
+            SITES[session.role].forEach(site => {
+                let d = document.createElement('div');
+                d.className = 'glass-card'; d.style.padding = '15px'; d.style.cursor='pointer'; d.style.borderLeft='4px solid var(--cyan)';
+                d.innerHTML = `<div style="color:var(--cyan); font-weight:900;">${site.n}</div><div style="font-size:10px; color:gray;">${site.a}</div>`;
+                d.onclick = () => launchSite(site);
+                list.appendChild(d);
+            });
+        }
+
+        function launchSite(site) {
+            session.activeSite = site;
+            session.reports = [];
+            document.getElementById('site-name-display').innerText = site.n.toUpperCase();
+            document.getElementById('intel-body').innerHTML = `<b>LOCATION:</b> ${site.n}<br><b>ADDR:</b> ${site.a}<br><br><b>DIR:</b> ${site.i}`;
+            document.getElementById('console-log-box').innerHTML = '';
+            session.sTime = 0;
+            
+            timers.s = setInterval(() => {
+                session.sTime++;
+                let m = Math.floor((session.sTime%3600)/60).toString().padStart(2,'0');
+                let s = (session.sTime%60).toString().padStart(2,'0');
+                document.getElementById('site-timer').innerText = `00:${m}:${s}`;
+            }, 1000);
+
+            let pulseMax = session.role === 'patrol' ? 60 : 3600;
+            session.pTime = pulseMax;
+            timers.p = setInterval(() => {
+                session.pTime--;
+                let pm = Math.floor(session.pTime/60).toString().padStart(2,'0');
+                let ps = (session.pTime%60).toString().padStart(2,'0');
+                document.getElementById('pulse-clock').innerText = `${pm}:${ps}`;
+                if (session.pTime < 10) document.getElementById('pulse-warning').style.display='block';
+                if (session.pTime <= 0) {
+                    addLog("! PULSE ALERT: Photo verification required.");
+                    session.pTime = pulseMax;
+                    document.getElementById('pulse-warning').style.display='none';
+                }
+            }, 1000);
+            navigate('console-screen');
+            addLog("Site Telemetry Link: SECURE.");
+        }
+
+        function tab(id) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.log-window').forEach(w => w.style.display='none');
+            document.getElementById('t-'+id).classList.add('active');
+            document.getElementById('view-'+id).style.display='block';
+        }
+
+        function reportTab(id) {
+            document.querySelectorAll('#view-reports .nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.report-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('btn-'+id).classList.add('active');
+            document.getElementById('sec-'+id).classList.add('active');
+        }
+
+        function snapConfirm() {
+            const voice = AI_VOICE[Math.floor(Math.random()*AI_VOICE.length)];
+            const manual = document.getElementById('manual-note').value;
+            addLog(`[SNAPSHOT] AI_NARRATION: ${voice} ${manual ? '| NOTE: '+manual : ''}`, true);
+            document.getElementById('manual-note').value = '';
+            session.pTime = session.role === 'patrol' ? 60 : 3600;
+            document.getElementById('pulse-warning').style.display='none';
+        }
+
+        function addLog(msg, pic=false) {
+            const box = document.getElementById('console-log-box');
+            const row = document.createElement('div');
+            row.className = 'log-row';
+            let thumb = pic ? `<div class="log-thumb">IMAGE</div>` : '';
+            row.innerHTML = `${thumb}<div class="log-body"><span class="log-time">[${new Date().toLocaleTimeString()}]</span> ${msg}<span class="log-meta">PXE_STAMP: ${new Date().toISOString()}</span></div>`;
+            box.prepend(row);
+        }
+
+        function saveReport(type) {
+            let detail = "";
+            if(type === 'Incident') detail = `${document.getElementById('inc-type').value}: ${document.getElementById('inc-desc').value}`;
+            if(type === 'Maintenance') detail = `${document.getElementById('maint-item').value} (${document.getElementById('maint-urgency').value})`;
+            if(type === 'Parking') detail = `Plate: ${document.getElementById('park-plate').value} | ${document.getElementById('park-violation').value}`;
+            
+            session.reports.push({type, detail, time: new Date().toLocaleTimeString()});
+            addLog(`[REPORT_SAVED] ${type} Logged successfully.`);
+            tab('log');
+        }
+
+        function exitReview() {
+            const dar = document.getElementById('final-dar');
+            let reportHtml = `<h2 style="border-bottom: 2px solid black;">DAILY ACTIVITY REPORT</h2>`;
+            reportHtml += `<p><b>Operator:</b> MIL-774 | <b>Site:</b> ${session.activeSite.n}</p><hr>`;
+            
+            if(session.reports.length > 0) {
+                reportHtml += `<h3>SPECIAL REPORTS</h3>`;
+                session.reports.forEach(r => reportHtml += `<p><b>[${r.time}] ${r.type}:</b> ${r.detail}</p>`);
+            }
+            
+            reportHtml += `<h3>ACTIVITY TELEMETRY</h3>`;
+            reportHtml += document.getElementById('console-log-box').innerHTML.replace(/IMAGE/g, '[ATTACHED PHOTO]');
+            
+            dar.innerHTML = reportHtml;
+            navigate('review-screen');
+        }
+
+        function vaultSync() {
+            clearInterval(timers.s); clearInterval(timers.p);
+            session.history.push({s: session.activeSite.n, t: new Date().toLocaleTimeString()});
+            const h = document.getElementById('session-history');
+            h.innerHTML = '';
+            session.history.forEach(i => h.innerHTML += `<div>[COMPLETED] ${i.s} @ ${i.t}</div>`);
+            navigate('hub-screen');
+        }
+
+    </script>
+</body>
+</html>
