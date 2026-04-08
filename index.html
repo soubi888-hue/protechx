@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PXE Security | Sovereign Infrastructure v19.0</title>
+    <style>
+        /* PXE-OS v19.0 TACTICAL CSS FRAMEWORK
+           Optimized for iPhone 15 Pro Max High-Density Retina Display
+           Enterprise-Grade Sovereign UI
+        */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Roboto+Mono:wght@400;700&display=swap');
+
+        :root {
+            --pxe-bg: #02040a;
+            --pxe-card: rgba(13, 17, 23, 0.98);
+            --pxe-cyan: #00D1FF;
+            --pxe-gold: #FFD700;
+            --pxe-blue: #2563EB;
+            --pxe-alert: #FF003C;
+            --pxe-success: #10B981;
+            --pxe-text: #F0F6FC;
+            --pxe-border: #30363d;
+            --pxe-header-h: 95px;
+            --pxe-glow: 0 0 20px rgba(0, 209, 255, 0.35);
+        }
+
+        /* --- GLOBAL CORE STYLES --- */
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; outline: none; }
+        body, html {
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            background: var(--pxe-bg); color: var(--pxe-text);
+            font-family: 'Inter', sans-serif; overflow: hidden;
+        }
+
+        /* --- TACTICAL OVERLAYS --- */
+        .pxe-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(0, 209, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 209, 255, 0.03) 1px, transparent 1px);
+            background-size: 35px 35px; pointer-events: none; z-index: -1;
+        }
+        .pxe-vignette {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.8) 100%);
+            pointer-events: none; z-index: 1000;
+        }
+        .pxe-scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 4px, 3px 100%; z-index: 99999; pointer-events: none; opacity: 0.2;
+        }
+
+        /* --- MASTER HEADER --- */
+        .pxe-header {
+            position: fixed; top: 0; width: 100%; height: var(--pxe-header-h);
+            background: rgba(1, 4, 9, 0.95); backdrop-filter: blur(25px);
+            border-bottom: 2px solid var(--pxe-border); z-index: 9000;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .pxe-badge {
+            padding: 10px 32px; border: 2px solid var(--pxe-gold);
+            background: #000; clip-path: polygon(15% 0%, 85% 0%, 100% 50%, 85% 100%, 15% 100%, 0% 50%);
+            box-shadow: var(--pxe-glow); text-align: center;
+        }
+        .pxe-main-title { font-weight: 900; font-size: 28px; letter-spacing: 5px; color: #fff; text-shadow: 0 0 15px var(--pxe-cyan); }
+        .pxe-sub-title { display: block; font-size: 8px; color: var(--pxe-gold); letter-spacing: 4px; margin-top: -5px; font-weight: bold; }
+
+        /* --- SCREEN VIEW ENGINE --- */
+        .pxe-viewport { position: relative; width: 100%; height: 100%; }
+        .pxe-screen {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100dvh;
+            flex-direction: column; padding: calc(var(--pxe-header-h) + 15px) 20px 40px 20px;
+            overflow-y: auto; -webkit-overflow-scrolling: touch; box-sizing: border-box;
+        }
+        .pxe-screen.active { display: flex; animation: pxeFadeSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes pxeFadeSlide { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* --- TACTICAL COMPONENTS --- */
+        .pxe-card { 
+            background: var(--pxe-card); border: 1px solid var(--pxe-border); 
+            border-radius: 16px; padding: 22px; margin-bottom: 20px; width: 100%;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+        }
+        .pxe-card-head { font-size: 11px; font-weight: 900; color: var(--pxe-cyan); letter-spacing: 2px; margin-bottom: 15px; border-bottom: 1px solid #21262d; padding-bottom: 8px; text-transform: uppercase; }
+
+        .pxe-btn {
+            width: 100%; padding: 20px; border-radius: 12px; border: 2px solid transparent;
+            font-weight: 900; text-transform: uppercase; letter-spacing: 2px;
+            cursor: pointer; transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); margin-bottom: 15px;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            flex-shrink: 0;
+        }
+        .pxe-btn-cyan { background: var(--pxe-cyan); color: #000; box-shadow: var(--pxe-glow); }
+        .pxe-btn-cyan:active { transform: scale(0.97); background: #fff; }
+        .pxe-btn-outline { background: transparent; border: 1px solid var(--pxe-cyan); color: var(--pxe-cyan); }
+        .pxe-btn-selected { background: var(--pxe-cyan) !important; color: #000 !important; border-color: var(--pxe-gold) !important; box-shadow: 0 0 25px var(--pxe-cyan); }
+        .pxe-btn-alert { background: var(--pxe-alert); color: #fff; }
+
+        /* --- TACTICAL HUD --- */
+        .pxe-hud { 
+            background: #000; border-left: 4px solid var(--pxe-gold); 
+            padding: 15px; border-radius: 8px; margin-bottom: 20px; 
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .hud-lbl { font-size: 8px; color: #8b949e; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;}
+        .hud-val { font-family: 'Roboto Mono', monospace; font-size: 18px; font-weight: 700; color: var(--pxe-cyan); }
+
+        /* --- TABBED CONSOLE --- */
+        .pxe-tab-bar { display: flex; gap: 5px; margin-bottom: 15px; flex-shrink: 0; }
+        .pxe-tab { 
+            flex: 1; padding: 12px 2px; background: #0d1117; border: 1px solid var(--pxe-border);
+            color: #484f58; font-size: 8px; font-weight: 900; border-radius: 8px; text-align: center;
+        }
+        .pxe-tab.active { background: var(--pxe-cyan); color: #000; border-color: var(--pxe-cyan); }
+
+        /* --- TELEMETRY LOG ENGINE --- */
+        .pxe-log-window { 
+            flex: 1; overflow-y: auto; padding: 20px; border-radius: 12px; 
+            background: rgba(0,0,0,0.6); border: 1px solid var(--pxe-border); margin-bottom: 20px;
+        }
+        .pxe-log-row { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #21262d; padding-bottom: 15px; align-items: flex-start; }
+        .pxe-log-visual { 
+            width: 60px; height: 45px; background: #0f172a; border: 1px solid var(--pxe-cyan); 
+            border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--pxe-cyan); font-weight: 900;
+        }
+        .pxe-log-visual::after { content: 'IMAGE'; }
+        .pxe-log-body { flex: 1; font-family: 'Roboto Mono', monospace; font-size: 11px; line-height: 1.6; }
+        .pxe-log-stamp { font-size: 9px; color: var(--pxe-blue); display: block; margin-top: 6px; font-weight: 800; }
+
+        /* --- INPUTS & FORMS --- */
+        .pxe-input {
+            width: 100%; background: #0d1117; border: 1px solid var(--pxe-border); color: #fff; 
+            padding: 18px; border-radius: 12px; margin-bottom: 25px; font-family: 'Roboto Mono'; 
+            font-size: 16px; outline: none; text-align: center; transition: 0.3s;
+        }
+        .pxe-input:focus { border-color: var(--pxe-cyan); box-shadow: 0 0 15px rgba(0,209,255,0.2); }
+        .pxe-textarea { height: 100px; resize: none; text-align: left; font-size: 14px; }
+
+        /* --- PULSE ALERT --- */
+        #pulse-warning { color: var(--pxe-gold); font-weight: 900; text-align: center; font-size: 13px; animation: flicker 1s infinite; display: none; margin-bottom: 10px; }
+        @keyframes flicker { 50% { opacity: 0.1; } }
+
+    </style>
+</head>
+<body>
+    <div class="pxe-grid"></div>
+    <div class="pxe-vignette"></div>
+    <div class="pxe-scanlines"></div>
+
+    <header class="pxe-header">
+        <div class="pxe-badge">
+            <span class="pxe-main-title">PXE</span>
+            <span class="pxe-sub-title">SOVEREIGN INFRASTRUCTURE</span>
+        </div>
+    </header>
+
+    <div class="pxe-viewport">
+
+        <div id="login-screen" class="pxe-screen active" style="justify-content:center; align-items:center;">
+            <div class="pxe-card" style="max-width: 380px; text-align: center; border-top: 4px solid var(--pxe-gold);">
+                <div class="pxe-card-head">SECURE IDENTITY GATEWAY</div>
+                <input type="text" id="auth-id" placeholder="OPERATOR / ADMIN ID" class="pxe-input">
+                <input type="text" id="auth-pin" placeholder="SECURITY PIN" class="pxe-input">
+                <button class="pxe-btn pxe-btn-cyan" onclick="executeAuth()">[ AUTHORIZE SESSION ]</button>
+                <div style="font-size: 9px; color: #475569; margin-top: 20px; line-height: 1.6;">
+                    PXE-GUARD: 9999 | PXE-ADMIN: 8888 | PXE-CLIENT: 7777
+                </div>
+            </div>
+        </div>
+
+        <div id="setup-screen" class="pxe-screen">
+            <div class="pxe-card">
+                <div class="pxe-card-head">PROTOCOL_INITIALIZATION</div>
+                <label class="hud-lbl" style="display:block; margin-bottom:12px;">DEPLOYMENT ROLE</label>
+                <div style="display:flex; gap:10px; margin-bottom: 25px;">
+                    <button id="role-patrol" class="pxe-btn pxe-btn-outline" style="margin:0;" onclick="selectProtocol('role', 'patrol')">Mobile Patrol</button>
+                    <button id="role-stationary" class="pxe-btn pxe-btn-outline" style="margin:0;" onclick="selectProtocol('role', 'stationary')">Stationary</button>
+                </div>
+                <label class="hud-lbl" style="display:block; margin-bottom:12px;">SHIFT ROTATION</label>
+                <button id="s-day" class="pxe-btn pxe-btn-outline" style="margin-top:10px;" onclick="selectProtocol('shift', 'day')">Day Ops (0600-1800)</button>
+                <button id="s-grave" class="pxe-btn pxe-btn-outline" onclick="selectProtocol('shift', 'grave')">Night Ops (1800-0600)</button>
+            </div>
+            <button class="pxe-btn pxe-btn-cyan" onclick="commitProtocol()">[ INITIALIZE SOVEREIGN HUB ]</button>
+            <div style="height: 50px;"></div>
+        </div>
+
+        <div id="district-screen" class="pxe-screen">
+            <div class="pxe-card-head">SELECT SECTOR DISTRICT</div>
+            <button class="pxe-btn pxe-btn-outline" onclick="loadRoleSites('District 6 - Sacramento North')">District 6 (Sacramento North)</button>
+            <button class="pxe-btn pxe-btn-outline" onclick="loadRoleSites('District 7 - Placer / Roseville')">District 7 (Placer / Roseville)</button>
+            <button class="pxe-btn pxe-btn-outline" onclick="loadRoleSites('District 8 - Citrus Heights')">District 8 (Citrus Heights)</button>
+            <button class="pxe-btn pxe-btn-outline" style="margin-top:auto; color:gray; border-color:gray;" onclick="navigate('setup-screen')">BACK</button>
+        </div>
+
+        <div id="hub-screen" class="pxe-screen">
+            <div class="pxe-hud">
+                <div>
+                    <div class="hud-lbl">GLOBAL DUTY TIMER</div>
+                    <div id="global-session-clock" class="hud-val">00:00:00</div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="hud-lbl">OP_STATUS</div>
+                    <div id="op-status-text" style="color: var(--pxe-gold); font-weight: 900; font-size: 14px;">AUTHORIZED</div>
+                </div>
+            </div>
+
+            <div class="pxe-card">
+                <div class="pxe-card-head">ASSIGNMENT_LOCATOR</div>
+                <div id="hub-assignment-list">
+                    </div>
+            </div>
+
+            <div class="pxe-card">
+                <div class="pxe-card-head">SESSION_HISTORY_LOG</div>
+                <div id="hub-history-container" style="font-family: 'Roboto Mono'; font-size: 11px; color: #64748b;">No active telemetry archives.</div>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <button class="pxe-btn pxe-btn-outline" style="flex:1;" onclick="navigate('setup-screen')">MODIFY PROTOCOL</button>
+                <button class="pxe-btn pxe-btn-alert" style="flex:1;" onclick="location.reload()">DE-AUTHORIZE</button>
+            </div>
+            <div style="height: 60px;"></div>
+        </div>
+
+        <div id="console-screen" class="pxe-screen">
+            <div class="pxe-hud">
+                <div>
+                    <div id="con-site-title" style="font-weight: 900; font-size: 16px; color: var(--pxe-cyan);">SITE_LOCKED</div>
+                    <div id="con-site-timer" class="hud-val" style="font-size: 13px;">00:00:00</div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="hud-lbl">TELEMETRY_PULSE</div>
+                    <div id="con-pulse-clock" class="hud-val">--:--</div>
+                </div>
+            </div>
+
+            <div class="pxe-tab-bar">
+                <button id="t-log" class="pxe-tab active" onclick="switchTab('log')">LIVE_LOG</button>
+                <button id="t-reports" class="pxe-tab" onclick="switchTab('reports')">REPORTS</button>
+                <button id="t-sop" class="pxe-tab" onclick="switchTab('sop')">S.O.P.</button>
+                <button id="t-intel" class="pxe-tab" onclick="switchTab('intel')">SITE_INTEL</button>
+            </div>
+
+            <div id="pulse-warning">! VISUAL SNAPSHOT REQUIRED !</div>
+
+            <div id="area-log" class="pxe-log-window" style="display:block;"><div id="mission-log-stream"></div></div>
+            
+            <div id="area-reports" class="pxe-log-window" style="display:none;">
+                <div style="display:flex; gap:5px; margin-bottom:15px;">
+                    <button class="pxe-tab active" id="rb-inc" onclick="switchReport('inc')">INCIDENT</button>
+                    <button class="pxe-tab" id="rb-maint" onclick="switchReport('maint')">MAINT</button>
+                    <button class="pxe-tab" id="rb-park" onclick="switchReport('park')">PARKING</button>
+                </div>
+                <div id="form-inc" class="report-module active">
+                    <select class="pxe-input" id="inc-cat"><option>Suspicious Subject</option><option>Vandalism</option><option>Trespass Notice</option><option>Theft</option></select>
+                    <textarea class="pxe-input pxe-textarea" id="inc-narrative" placeholder="Detailed Incident Report... Use Voice-to-Text if available."></textarea>
+                    <button class="pxe-btn pxe-btn-cyan" onclick="saveOperationalReport('INCIDENT')">VAULT INCIDENT REPORT</button>
+                </div>
+                <div id="form-maint" class="report-module" style="display:none;">
+                    <input class="pxe-input" id="maint-item" placeholder="Issue (e.g. Broken Lock)">
+                    <select class="pxe-input" id="maint-priority"><option>Low</option><option>High - Urgent</option></select>
+                    <button class="pxe-btn pxe-btn-cyan" onclick="saveOperationalReport('MAINTENANCE')">VAULT MAINT LOG</button>
+                </div>
+                <div id="form-park" class="report-module" style="display:none;">
+                    <input class="pxe-input" id="park-plate" placeholder="License Plate #">
+                    <button class="pxe-btn pxe-btn-cyan" onclick="saveOperationalReport('PARKING')">VAULT VIOLATION</button>
+                </div>
+            </div>
+
+            <div id="area-sop" class="pxe-log-window" style="display:none;">
+                <h4 style="color:var(--pxe-cyan); margin:0 0 10px 0;">SOVEREIGN POST ORDERS</h4>
+                <div style="font-size:11px; line-height:1.8; color:#94a3b8;">
+                    <b>[01] VISUAL VERIFICATION:</b> Operator must utilize AUTO-SNAP to confirm physical location. Capture site markers.<br><br>
+                    <b>[02] TRESPASSING:</b> Politely inform unauthorized loiterers of property policy. Log all interactions.<br><br>
+                    <b>[03] ENGAGEMENT:</b> Observe and Report. Do not engage in physical combat unless life is threatened.<br><br>
+                    <b>[04] EXTRACTION:</b> Mission extraction is only authorized after full DAR review.
+                </div>
+            </div>
+
+            <div id="area-intel" class="pxe-log-window" style="display:none;"><div id="intel-body-text" style="font-size:11px; line-height:1.6;"></div></div>
+
+            <textarea id="manual-note-input" class="pxe-input pxe-textarea" style="height:60px; border-color:var(--pxe-cyan); margin-bottom:10px;" placeholder="Add Manual Detail to Log..."></textarea>
+            
+            <div style="display:flex; gap:10px;">
+                <button class="pxe-btn pxe-btn-outline" style="flex:1; margin:0;" onclick="syncManualNote()">[ SYNC NOTE ]</button>
+                <button class="pxe-btn pxe-btn-cyan" style="flex:2; margin:0;" onclick="document.getElementById('camera-actuator').click()">AUTO-SNAP & AI NARRATE</button>
+            </div>
+            
+            <input type="file" id="camera-actuator" accept="image/*" capture="environment" style="display:none;" onchange="executeTelemetrySnap()">
+            
+            <button class="pxe-btn pxe-btn-outline" style="border-color:var(--pxe-alert); color:var(--pxe-alert); margin-top:15px;" onclick="initiateExtraction()">[ EXIT SITE & REVIEW ]</button>
+            <div style="height: 50px;"></div>
+        </div>
+
+        <div id="review-screen" class="pxe-screen">
+            <h2 style="color: var(--pxe-cyan); margin: 0 0 20px 0; font-weight: 900;">MISSION_EXTRACTION_REVIEW</h2>
+            <div class="pxe-card" id="review-final-log" style="height: 420px; overflow-y: auto; background: #fff; color: #000; font-family: 'Times New Roman', serif; padding: 30px;">
+                </div>
+            <button class="pxe-btn pxe-btn-cyan" onclick="finalizeGlobalHistory()">[ CONFIRM & SYNC TO VAULT ]</button>
+            <button class="pxe-btn pxe-btn-outline" onclick="navigate('console-screen')">CANCEL EXTRACTION</button>
+            <div style="height: 50px;"></div>
+        </div>
+
+        <div id="admin-screen" class="pxe-screen">
+            <div class="pxe-card" style="border-top: 4px solid var(--pxe-gold);">
+                <div class="pxe-card-head">AGENCY_MASTER_COMMAND</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
+                    <div style="background:#000; padding:15px; border-radius:12px; border-left:4px solid var(--pxe-cyan);">
+                        <span style="font-size:9px; color:gray;">ACTIVE_GUARDS</span><br><span style="font-size:24px; font-weight:900; color:var(--pxe-cyan);">14</span>
+                    </div>
+                    <div style="background:#000; padding:15px; border-radius:12px; border-left:4px solid var(--pxe-alert);">
+                        <span style="font-size:9px; color:gray;">OPEN_ALERTS</span><br><span style="font-size:24px; font-weight:900; color:var(--pxe-alert);">02</span>
+                    </div>
+                </div>
+                <div style="font-family:'Roboto Mono'; font-size:10px; height:350px; overflow-y:auto; background:rgba(0,0,0,0.5); padding:15px; border-radius:12px;">
+                    [04:40:12] PXE-774: SITE_ENTRY (Carls Jr 654)<br>
+                    [04:42:05] PXE-102: TELEMETRY_SNAP (Sector B)<br>
+                    [04:45:00] SYSTEM: GEOFENCE_ACTIVE (Global)
+                </div>
+            </div>
+            <button class="pxe-btn pxe-btn-outline" onclick="location.reload()">LOGOUT COMMAND</button>
+        </div>
+
+        <div id="client-screen" class="pxe-screen">
+            <div class="pxe-card" style="border-top: 2px solid var(--pxe-blue);">
+                <div class="pxe-card-head">PROPERTY_MANAGER_VAULT</div>
+                <div style="background:#111; padding:15px; border-radius:12px; margin-bottom:20px;">
+                    <div style="font-size:10px; color:gray; margin-bottom:10px;">DAILY_ACTIVITY_REPORTS</div>
+                    <div style="border-bottom:1px solid #222; padding:12px 0; display:flex; justify-content:space-between;">
+                        <span>[2026-04-08] Carls Jr 654 DAR</span> <span style="color:var(--pxe-cyan);">VIEW</span>
+                    </div>
+                </div>
+                <textarea class="pxe-input pxe-textarea" style="font-size:12px;" placeholder="Update Site Directives..."></textarea>
+                <button class="pxe-btn pxe-btn-outline" style="font-size:10px;">SYNC NEW POST ORDERS</button>
+            </div>
+            <button class="pxe-btn pxe-btn-outline" onclick="location.reload()">EXIT VAULT</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- MASTER DATA LIBRARIES ---
+        const SITE_DATABASE = {
+            patrol: [
+                { id: 'CJ654', n: 'Carls Jr 654', a: 'North J Street Sacramento CA 95610', i: 'Patrol perimeter every 30m. Check drive-thru locks. Report loitering.' },
+                { id: 'SH1200', n: 'Shell Gas 1200', a: '1200 Broadway, Sacramento CA 95818', i: 'Monitor gas island. Verify convenience store security.' },
+                { id: 'CHM800', n: 'Citrus Heights Mall', a: '8000 Sunrise Blvd, 95610', i: 'Sweep dark alcoves. Verify water valve security.' }
+            ],
+            stationary: [
+                { id: 'GATE1', n: 'Main Gate Post 01', a: 'Elite Command Post', i: 'Verify employee ID. Monitor vehicle entrance.' },
+                { id: 'LOBBY1', n: 'Elite Tower Lobby', a: 'Central Reception', i: 'Sign in visitors. Monitor CCTV banks.' }
+            ]
+        };
+
+        const AI_NARRATIONS = [
+            "Perimeter verified secure. All entry points locked.",
+            "Visual check complete: No unauthorized loitering detected.",
+            "Tactical snapshot analyzed. Physical barriers intact.",
+            "GPS match confirmed. Site integrity nominal.",
+            "No anomalies detected during sectoral sweep. Status: SECURE."
+        ];
+
+        // --- GLOBAL STATE ENGINE ---
+        let appState = {
+            role: '', shift: '', gTime: 0, sTime: 0, pTime: 0, activeSite: null, history: [], reports: []
+        };
+        let appTimers = { g: null, s: null, p: null };
+
+        // --- NAVIGATION CONTROLLER ---
+        function navigate(id) {
+            document.querySelectorAll('.pxe-screen').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(id);
+            target.classList.add('active');
+            target.scrollTop = 0;
+        }
+
+        // --- AUTH ENGINE ---
+        function executeAuth() {
+            const id = document.getElementById('auth-id').value.toUpperCase();
+            const pin = document.getElementById('auth-pin').value;
+            if (id === 'MIL-774' && pin === '9999') { navigate('setup-screen'); startGlobalOpsClock(); }
+            else if (id === 'ADMIN-01' && pin === '8888') navigate('admin-screen');
+            else if (id === 'CLIENT-99' && pin === '7777') navigate('client-screen');
+            else alert("PXE_SECURITY_ERROR: AUTH_FAILED");
+        }
+
+        function startGlobalOpsClock() {
+            if (appTimers.g) return;
+            appTimers.g = setInterval(() => {
+                appState.gTime++;
+                let h = Math.floor(appState.gTime/3600).toString().padStart(2,'0');
+                let m = Math.floor((appState.gTime%3600)/60).toString().padStart(2,'0');
+                let s = (appState.gTime%60).toString().padStart(2,'0');
+                document.getElementById('global-session-clock').innerText = `${h}:${m}:${s}`;
+            }, 1000);
+        }
+
+        // --- PROTOCOL ENGINE ---
+        function selectProtocol(type, val) {
+            appState[type] = val;
+            const prefix = type === 'role' ? 'role-' : 's-';
+            document.querySelectorAll(`[id^="${prefix}"]`).forEach(b => b.classList.remove('pxe-btn-selected'));
+            document.getElementById(prefix + val).classList.add('pxe-btn-selected');
+        }
+
+        function commitProtocol() {
+            if (!appState.role || !appState.shift) return alert("COMPLETE MISSION PROTOCOLS");
+            if (appState.role === 'patrol') navigate('district-screen');
+            else loadRoleSites('Stationary Mission');
+        }
+
+        function loadRoleSites(district) {
+            const list = document.getElementById('hub-assignment-list');
+            list.innerHTML = '';
+            const data = SITE_DATABASE[appState.role];
+            data.forEach(site => {
+                let d = document.createElement('div');
+                d.className = 'pxe-card'; d.style.padding = '15px'; d.style.cursor = 'pointer'; d.style.borderLeft = '4px solid var(--pxe-cyan)';
+                d.innerHTML = `<div style="color:var(--pxe-cyan); font-weight:900;">${site.n}</div><div style="font-size:10px; color:gray;">${site.a}</div>`;
+                d.onclick = () => launchDeployment(site);
+                list.appendChild(d);
+            });
+            navigate('hub-screen');
+        }
+
+        // --- SITE CONSOLE ENGINE ---
+        function launchDeployment(site) {
+            appState.activeSite = site;
+            appState.reports = [];
+            document.getElementById('con-site-title').innerText = site.n.toUpperCase();
+            document.getElementById('intel-body-text').innerHTML = `<b>LOCATION:</b> ${site.n}<br><b>ADDR:</b> ${site.a}<br><br><b>DIRECTIVE:</b> ${site.i}`;
+            document.getElementById('mission-log-stream').innerHTML = '';
+            
+            appState.sTime = 0;
+            if (appTimers.s) clearInterval(appTimers.s);
+            appTimers.s = setInterval(() => {
+                appState.sTime++;
+                let m = Math.floor((appState.sTime%3600)/60).toString().padStart(2,'0');
+                let s = (appState.sTime%60).toString().padStart(2,'0');
+                document.getElementById('con-site-timer').innerText = `00:${m}:${s}`;
+            }, 1000);
+
+            let limit = appState.role === 'patrol' ? 60 : 3600;
+            appState.pTime = limit;
+            if (appTimers.p) clearInterval(appTimers.p);
+            appTimers.p = setInterval(() => {
+                appState.pTime--;
+                let pm = Math.floor(appState.pTime/60).toString().padStart(2,'0');
+                let ps = (appState.pTime%60).toString().padStart(2,'0');
+                document.getElementById('con-pulse-clock').innerText = `${pm}:${ps}`;
+                if (appState.pTime < 10) document.getElementById('pulse-warning').style.display = 'block';
+                if (appState.pTime <= 0) {
+                    addLog("! PULSE ALERT: Photo verification required.");
+                    appState.pTime = limit;
+                    document.getElementById('pulse-warning').style.display = 'none';
+                }
+            }, 1000);
+            navigate('console-screen');
+            addLog("Site Telemetry Active.");
+        }
+
+        function switchTab(id) {
+            document.querySelectorAll('.pxe-tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.pxe-log-window').forEach(w => w.style.display = 'none');
+            document.getElementById('t-' + id).classList.add('active');
+            document.getElementById('area-' + id).style.display = 'block';
+        }
+
+        function switchReport(id) {
+            document.querySelectorAll('.report-module').forEach(m => m.classList.remove('active'));
+            document.querySelectorAll('#area-reports .pxe-tab').forEach(b => b.classList.remove('active'));
+            document.getElementById('form-' + id).classList.add('active');
+            document.getElementById('rb-' + id).classList.add('active');
+        }
+
+        function syncManualNote() {
+            const note = document.getElementById('manual-note-input').value;
+            if (!note) return;
+            addLog(`[MANUAL_ENTRY] ${note}`);
+            document.getElementById('manual-note-input').value = '';
+        }
+
+        function executeTelemetrySnap() {
+            const narr = AI_NARRATIONS[Math.floor(Math.random() * AI_NARRATIONS.length)];
+            const note = document.getElementById('manual-note-input').value;
+            addLog(`[SNAPSHOT] AI: ${narr} ${note ? '| NOTE: ' + note : ''}`, true);
+            document.getElementById('manual-note-input').value = '';
+            appState.pTime = appState.role === 'patrol' ? 60 : 3600;
+            document.getElementById('pulse-warning').style.display = 'none';
+        }
+
+        function addLog(msg, hasPic = false) {
+            const stream = document.getElementById('mission-log-stream');
+            const row = document.createElement('div');
+            row.className = 'pxe-log-row';
+            let visual = hasPic ? `<div class="pxe-log-visual"></div>` : '';
+            row.innerHTML = `${visual}<div class="pxe-log-body"><span class="pxe-log-time">[${new Date().toLocaleTimeString()}]</span> ${msg}<span class="pxe-log-stamp">PXE_STAMP: ${new Date().toISOString()} | GPS: 38.6784, -121.2855</span></div>`;
+            stream.prepend(row);
+        }
+
+        function saveOperationalReport(type) {
+            let detail = "";
+            if (type === 'INCIDENT') detail = document.getElementById('inc-narrative').value;
+            if (type === 'MAINTENANCE') detail = document.getElementById('maint-item').value;
+            if (type === 'PARKING') detail = document.getElementById('park-plate').value;
+            appState.reports.push({ type, detail, time: new Date().toLocaleTimeString() });
+            addLog(`[${type}_SAVED] Data synced to global vault.`);
+            switchTab('log');
+        }
+
+        function initiateExtraction() {
+            const review = document.getElementById('review-final-log');
+            let html = `<h2>DAILY ACTIVITY REPORT</h2><p><b>Officer:</b> MIL-774 | <b>Site:</b> ${appState.activeSite.n}</p><hr>`;
+            if (appState.reports.length > 0) {
+                html += `<h3>SPECIAL REPORTS</h3>`;
+                appState.reports.forEach(r => html += `<p><b>[${r.time}] ${r.type}:</b> ${r.detail}</p>`);
+            }
+            html += `<h3>ACTIVITY TELEMETRY</h3>` + document.getElementById('mission-log-stream').innerHTML.replace(/IMAGE/g, '[ATTACHED PHOTO]');
+            review.innerHTML = html;
+            navigate('review-screen');
+        }
+
+        function finalizeGlobalHistory() {
+            clearInterval(appTimers.s); clearInterval(appTimers.p);
+            appState.history.push({ site: appState.activeSite.n, t: new Date().toLocaleTimeString() });
+            const hubHistory = document.getElementById('hub-history-container');
+            hubHistory.innerHTML = '';
+            appState.history.forEach(item => {
+                hubHistory.innerHTML += `<div style="border-bottom: 1px solid #222; padding: 5px 0;">[COMPLETED] ${item.site} - OUT @ ${item.t}</div>`;
+            });
+            navigate('hub-screen');
+        }
+    </script>
+</body>
+</html>
