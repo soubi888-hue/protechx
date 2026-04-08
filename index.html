@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pro-TechX Telemetry</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --gunmetal: #1A1A1D;
+            --neon-green: #39FF14;
+            --alert-red: #FF2A2A;
+            --kevlar-gray: #333333;
+            --text-main: #FFFFFF;
+        }
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- LOGIN SCREEN --- */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+        }
+        
+        .logo-text {
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+        
+        .sub-text {
+            font-family: monospace;
+            color: gray;
+            font-size: 10px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .input-group {
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            font-size: 12px;
+            color: var(--neon-green);
+            font-family: monospace;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--gunmetal);
+            border: 2px solid var(--kevlar-gray);
+            color: white;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: var(--neon-green);
+        }
+
+        .btn-large {
+            width: 100%;
+            max-width: 300px;
+            padding: 15px;
+            background-color: var(--gunmetal);
+            border: 2px solid var(--neon-green);
+            color: var(--neon-green);
+            font-weight: bold;
+            font-size: 16px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+
+        .btn-large:active {
+            background-color: var(--neon-green);
+            color: black;
+        }
+
+        /* --- MAIN APP LAYOUT --- */
+        #app-container {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: var(--gunmetal);
+            padding: 15px;
+            border-bottom: 2px solid var(--kevlar-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .profile-info {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .status-text {
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--neon-green);
+        }
+
+        /* --- FIELD MODE --- */
+        #field-mode {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            justify-content: space-between;
+        }
+
+        .pulse-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .pulse-ring {
+            width: 150px;
+            height: 150px;
+            border: 4px solid var(--neon-green);
+            border-radius: 50%;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: monospace;
+            font-size: 24px;
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+        }
+
+        .shift-btn {
+            background-color: var(--gunmetal);
+            border: 2px solid var(--neon-green);
+            color: var(--neon-green);
+            padding: 20px;
+            font-size: 20px;
+            font-weight: 900;
+            width: 100%;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        
+        .shift-btn.active {
+            border-color: var(--alert-red);
+            color: var(--alert-red);
+            box-shadow: 0 0 15px rgba(255, 42, 42, 0.2);
+        }
+
+        .vehicle-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--gunmetal);
+            padding: 15px;
+            border: 1px solid var(--kevlar-gray);
+            margin-bottom: auto;
+        }
+
+        .incident-btn {
+            background-color: var(--alert-red);
+            color: white;
+            border: none;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        /* --- DESK MODE --- */
+        #desk-mode {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+        }
+
+        .map-placeholder {
+            height: 40%;
+            background-color: #111;
+            border-bottom: 2px solid var(--neon-green);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: monospace;
+            color: gray;
+            position: relative;
+        }
+
+        .map-grid {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(57, 255, 20, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(57, 255, 20, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .blip {
+            width: 10px;
+            height: 10px;
+            background-color: var(--neon-green);
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+
+        .log-feed {
+            height: 60%;
+            background-color: var(--bg-color);
+            padding: 10px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .log-entry { margin-bottom: 8px; color: #ccc; }
+        .log-time { color: var(--neon-green); }
+        .log-alert { color: var(--alert-red); font-weight: bold; }
+
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="logo-text">PRO-TECHX</div>
+        <div class="sub-text">SECURE DISPATCH SYSTEM v1.0</div>
+        
+        <div class="input-group">
+            <label>OPERATOR ID / BADGE #</label>
+            <input type="text" id="username" placeholder="e.g. MIL-774 or ADMIN-01">
+        </div>
+        
+        <div class="input-group">
+            <label>CLEARANCE PIN</label>
+            <input type="password" id="password" placeholder="****">
+        </div>
+        
+        <button class="btn-large" onclick="attemptLogin()">[ INITIALIZE CONNECTION ]</button>
+        <p style="color: gray; font-size: 10px; margin-top: 20px;">Hint: MIL-774 (Guard) | ADMIN-01 (Desk)</p>
+    </div>
+
+    <div id="app-container">
+        
+        <div class="header">
+            <div id="header-profile">
+                <div class="profile-info" id="user-name">SO Miller</div>
+                <div class="status-text" id="user-status">Status: Standby</div>
+            </div>
+            <div class="status-text" id="system-time">00:00:00</div>
+        </div>
+
+        <div id="field-mode">
+            <button class="shift-btn" id="shiftBtn" onclick="toggleShift()">[ START SHIFT ]</button>
+            
+            <div class="vehicle-toggle">
+                <span style="font-weight: bold; font-family: monospace;">BOARD VEHICLE</span>
+                <input type="checkbox" style="width: 25px; height: 25px; accent-color: var(--neon-green);">
+            </div>
+
+            <div class="pulse-container">
+                <div style="font-family: monospace; color: gray; margin-bottom: 10px;">PULSE CHECK</div>
+                <div class="pulse-ring" id="pulse-timer">60 SEC</div>
+            </div>
+
+            <input type="file" id="nativeCamera" accept="image/*" capture="environment" style="display: none;">
+            <button class="incident-btn" onclick="document.getElementById('nativeCamera').click()">LOG INCIDENT / CAMERA</button>
+        </div>
+
+        <div id="desk-mode">
+            <div class="map-placeholder">
+                <div class="map-grid"></div>
+                <div class="blip" style="top: 40%; left: 50%;"></div>
+                <div class="blip" style="top: 60%; left: 30%; background-color: var(--alert-red); box-shadow: 0 0 10px var(--alert-red);"></div>
+                <span style="z-index: 1;">LIVE GPS FEED ACTIVE</span>
+            </div>
+            <div class="log-feed">
+                <div class="log-entry"><span class="log-time">[01:14:22]</span> [GPS: 38.678, -121.285] SO Miller: Shift initiated. Unit mobile.</div>
+                <div class="log-entry"><span class="log-time">[01:25:00]</span> [AI-SYS] Pulse Check: Nominal. No anomalies detected.</div>
+                <div class="log-entry"><span class="log-time">[01:32:45]</span> [LOG] SO Miller: Perimeter secure. No breaches at North Gate.</div>
+                <div class="log-entry log-alert">[01:40:12] [ALERT] Motion detected Sector 4. SO Miller dispatched.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Real-time clock for header
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('system-time').innerText = now.toLocaleTimeString('en-US', { hour12: false });
+        }, 1000);
+
+        // Login Logic
+        function attemptLogin() {
+            const user = document.getElementById('username').value.toUpperCase();
+            
+            if (user === 'MIL-774') {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-container').style.display = 'flex';
+                document.getElementById('field-mode').style.display = 'flex';
+                document.getElementById('user-name').innerText = 'SO Miller';
+                startPulseTimer();
+            } else if (user === 'ADMIN-01') {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-container').style.display = 'flex';
+                document.getElementById('desk-mode').style.display = 'flex';
+                document.getElementById('user-name').innerText = 'DISPATCH';
+                document.getElementById('user-status').innerText = 'Network: SECURE';
+            } else {
+                alert("ACCESS DENIED. Invalid ID.");
+            }
+        }
+
+        // Field Mode: Shift Toggle
+        let shiftActive = false;
+        function toggleShift() {
+            const btn = document.getElementById('shiftBtn');
+            const status = document.getElementById('user-status');
+            shiftActive = !shiftActive;
+            
+            if (shiftActive) {
+                btn.innerText = '[ END SHIFT ]';
+                btn.classList.add('active');
+                status.innerText = 'Status: DEPLOYED';
+                status.style.color = 'var(--alert-red)';
+            } else {
+                btn.innerText = '[ START SHIFT ]';
+                btn.classList.remove('active');
+                status.innerText = 'Status: Standby';
+                status.style.color = 'var(--neon-green)';
+            }
+        }
+
+        // Field Mode: 60 Second Pulse
+        function startPulseTimer() {
+            let timeLeft = 60;
+            const timerDisplay = document.getElementById('pulse-timer');
+            
+            setInterval(() => {
+                timeLeft--;
+                if (timeLeft < 0) {
+                    timeLeft = 60; // Reset
+                    // In a real app, this would ping the server
+                }
+                // Pad with zero if under 10
+                let displayTime = timeLeft < 10 ? "0" + timeLeft : timeLeft;
+                timerDisplay.innerText = displayTime + " SEC";
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
