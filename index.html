@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PXE Security | Master Command</title>
+    <style>
+        :root {
+            --bg: #020617;
+            --card-bg: rgba(15, 23, 42, 0.95);
+            --cyan: #00D1FF;
+            --elite-gold: #FFD700;
+            --blue: #3B82F6;
+            --alert: #EF4444;
+            --text: #F8FAFC;
+            --border: rgba(59, 130, 246, 0.4);
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100vh;
+            background: radial-gradient(circle at top left, #0f172a, #020617);
+            color: var(--text); font-family: 'Inter', sans-serif; overflow: hidden;
+        }
+
+        .grid-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 50px 50px; opacity: 0.05; pointer-events: none; z-index: -1;
+        }
+
+        /* PXE GLOBAL BRANDING */
+        .pxe-logo-container { text-align: center; margin-bottom: 20px; flex-shrink: 0; padding-top: 10px; }
+        .badge-hex {
+            display: inline-block; padding: 12px 24px; border: 2px solid var(--elite-gold);
+            background: rgba(0,0,0,0.8); box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+            clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%);
+        }
+        .badge-pxe { font-weight: 900; font-size: 28px; color: var(--text); letter-spacing: 4px; text-shadow: 0 0 15px var(--cyan); }
+        .badge-sub { display: block; font-size: 9px; color: var(--elite-gold); letter-spacing: 5px; margin-top: -5px; font-weight: bold; text-transform: uppercase;}
+
+        /* UI ELEMENTS */
+        .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; backdrop-filter: blur(15px); }
+        .btn { width: 100%; padding: 16px; border-radius: 10px; border: 2px solid transparent; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.2s; }
+        .btn-elite { background: linear-gradient(45deg, var(--cyan), var(--blue)); color: #000; margin-bottom: 12px; }
+        .btn-outline { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); margin-bottom: 12px; }
+        .btn-selected { background: var(--cyan) !important; color: #000 !important; border-color: var(--elite-gold) !important; box-shadow: 0 0 15px var(--cyan); }
+        
+        .screen { display: none; flex: 1; flex-direction: column; padding: 20px; overflow-y: auto; height: 100%; box-sizing: border-box;}
+        .active-screen { display: flex; }
+
+        /* LISTS */
+        .list-item { background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 20px; margin-bottom: 10px; border-radius: 12px; border-left: 4px solid var(--cyan); cursor: pointer; }
+        .list-item:active { background: var(--cyan); color: #000; }
+
+        /* LOGGING & TELEMETRY */
+        .log-box { flex: 1; overflow-y: auto; margin: 15px 0; padding: 15px; font-family: 'Roboto Mono', monospace; font-size: 11px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid #1e293b; }
+        .log-entry { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #1e293b; }
+        .log-ai { color: var(--cyan); font-weight: bold; display: block; margin: 5px 0; font-style: italic; }
+        .stamp { color: var(--blue); font-size: 9px; font-weight: bold; }
+
+        /* PULSE ALERT */
+        #pulse-warning { color: var(--elite-gold); font-size: 10px; font-weight: bold; text-align: center; margin-bottom: 5px; animation: blink 1s infinite; display: none; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+    </style>
+</head>
+<body>
+    <div class="grid-bg"></div>
+
+    <div id="login-screen" class="screen active-screen" style="justify-content:center; align-items:center;">
+        <div class="pxe-logo-container">
+            <div class="badge-hex"><span class="badge-pxe">PXE</span><span class="badge-sub">SECURITY</span></div>
+            <div style="font-size: 10px; color: var(--blue); letter-spacing: 5px; margin-top: 15px; font-weight: bold;">ELITE COMMAND OPS</div>
+        </div>
+        <div class="glass-card" style="padding: 30px; width: 100%; max-width: 320px; border-top: 2px solid var(--elite-gold); text-align: center;">
+            <input type="text" id="user-id" placeholder="ENTER ID KEY" style="width:100%; background:transparent; border:none; border-bottom:1px solid var(--cyan); color:white; padding:12px; margin-bottom:30px; text-align:center; font-size:18px; outline:none;">
+            <button class="btn btn-elite" onclick="login()">[ AUTHORIZE ]</button>
+            <div style="font-size: 9px; color: #444; margin-top: 15px;">ADMIN-01 | MIL-774 | CLIENT-99</div>
+        </div>
+    </div>
+
+    <div id="setup-screen" class="screen">
+        <div class="pxe-logo-container">
+            <div class="badge-hex"><span class="badge-pxe">PXE</span><span class="badge-sub">SECURITY</span></div>
+        </div>
+        <div class="glass-card" style="padding:25px;">
+            <div style="font-size: 11px; color: var(--cyan); margin-bottom: 20px; font-weight: bold;">MISSION INITIALIZATION</div>
+            <label style="font-size: 10px; color: var(--blue); letter-spacing:1px;">DEPLOYMENT ROLE</label>
+            <div style="display:flex; gap:10px; margin: 10px 0 25px;">
+                <button id="role-patrol" class="btn btn-outline" style="margin:0;" onclick="selectConfig('role', 'patrol')">Patrol</button>
+                <button id="role-stationary" class="btn btn-outline" style="margin:0;" onclick="selectConfig('role', 'stationary')">Static</button>
+            </div>
+            <label style="font-size: 10px; color: var(--blue); letter-spacing:1px;">SHIFT BLOCK</label>
+            <button id="s-day" class="btn btn-outline" style="margin-top:10px;" onclick="selectConfig('shift', 'day')">Day Ops</button>
+            <button id="s-grave" class="btn btn-outline" onclick="selectConfig('shift', 'grave')">Night Ops</button>
+        </div>
+        <button class="btn btn-elite" style="margin-top:auto;" onclick="proceedSetup()">COMMENCE MISSION</button>
+    </div>
+
+    <div id="district-screen" class="screen">
+        <div class="pxe-logo-container"><div class="badge-hex"><span class="badge-pxe">PXE</span><span class="badge-sub">DISTRICTS</span></div></div>
+        <div id="district-list" style="flex:1;">
+            <div class="list-item" onclick="loadSites('District 6 - Sacramento North')">District 6 (Sacramento North)</div>
+            <div class="list-item" onclick="loadSites('District 7 - Placer / Roseville')">District 7 (Placer / Roseville)</div>
+            <div class="list-item" onclick="loadSites('District 8 - Citrus Heights')">District 8 (Citrus Heights)</div>
+        </div>
+        <button class="btn btn-outline" onclick="navigate('setup-screen')">BACK</button>
+    </div>
+
+    <div id="site-screen" class="screen">
+        <div class="pxe-logo-container"><div class="badge-hex"><span class="badge-pxe">PXE</span><span class="badge-sub">ASSIGNMENTS</span></div></div>
+        <div style="font-size: 10px; color: var(--cyan); margin-bottom: 15px;" id="region-header">SELECT SITE</div>
+        <div id="sites-container" style="flex:1;"></div>
+        <button class="btn btn-outline" id="site-back-btn" onclick="navigate('district-screen')">BACK</button>
+    </div>
+
+    <div id="console-screen" class="screen" style="padding-top:10px;">
+        <div class="header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div class="badge-hex" style="padding: 5px 10px;"><span style="font-size:16px; font-weight:900; color:white;">PXE</span></div>
+                <div>
+                    <div id="active-site-display" style="font-weight:bold; font-size: 14px; color:var(--cyan);">SITE_LOCKED</div>
+                    <div id="site-clock" style="font-family:monospace; font-size:12px; color:var(--elite-gold);">TIME: 00:00:00</div>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:8px; color:gray;">PULSE SYNC</div>
+                <div id="pulse-clock" style="color:var(--cyan); font-family:monospace; font-size:14px;">--:--</div>
+            </div>
+        </div>
+
+        <div style="flex:1; display:flex; flex-direction:column;">
+            <div id="pulse-warning">! ALERT: SNAPSHOT REQUIRED !</div>
+            <div class="log-box" id="console-log"></div>
+
+            <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;" onchange="executeSnapshot()">
+            <button class="btn btn-elite" onclick="document.getElementById('camera-input').click()">AUTO-SNAP & AI NARRATE</button>
+            <button class="btn btn-outline" style="border-color:var(--alert); color:var(--alert); font-size:12px;" onclick="exitSite()">EXIT SITE & SYNC VAULT</button>
+        </div>
+    </div>
+
+    <div id="admin-screen" class="screen">
+        <div class="pxe-logo-container"><div class="badge-hex"><span class="badge-pxe">PXE</span><span class="badge-sub">COMMAND</span></div></div>
+        <div class="glass-card" style="padding:15px; margin-bottom:15px;">
+            <div style="color:var(--cyan); font-size:12px; font-weight:bold; margin-bottom:10px;">AGENCY MASTER VAULT</div>
+            <input type="text" placeholder="SEARCH TELEMETRY / SITE / DATE..." style="width:100%; background:#000; border:1px solid var(--border); color:white; padding:10px; border-radius:8px; font-size:12px;">
+        </div>
+        <div class="glass-card" id="admin-vault" style="flex:1; padding:15px; overflow-y:auto;">
+            <div style="font-size:11px; color:gray; text-align:center;">--- END OF GLOBAL DATA ---</div>
+        </div>
+        <button class="btn btn-outline" style="margin-top:15px;" onclick="location.reload()">LOGOUT</button>
+    </div>
+
+    <div id="vault-screen" class="screen">
+        <div class="pxe-logo-container"><div class="badge-hex"><span class="badge-pxe">PXE</span><span class="badge-sub">CLIENT</span></div></div>
+        <div class="glass-card" id="client-vault" style="flex:1; padding:20px; overflow-y:auto;">
+            <div style="color:var(--cyan); font-weight:bold; margin-bottom:15px;">PROPERTY ARCHIVES</div>
+        </div>
+        <button class="btn btn-outline" style="margin-top:20px;" onclick="location.reload()">EXIT VAULT</button>
+    </div>
+
+    <div id="report-screen" class="screen" style="background:#fff; color:#000; font-family: 'Times New Roman', serif; padding: 40px; overflow-y:auto;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="display: inline-block; padding: 5px 15px; border: 2px solid black; font-weight: 900; letter-spacing: 2px;">PXE SECURITY ELITE</div>
+        </div>
+        <h1 style="border-bottom: 3px solid #000; margin-top:0; font-size: 20px;">FINAL MISSION SUMMARY</h1>
+        <div id="report-meta" style="font-size:11px; font-family:monospace; margin-bottom:20px; line-height:1.4;"></div>
+        <div id="report-narrative" style="font-size:13px; line-height:1.6; text-align:justify;"></div>
+        <div style="margin-top:30px; font-size:10px; color:gray; border-top:1px solid #ddd; padding-top:10px;">AUTO-GENERATED VIA PXE AI OVERWATCH ENGINE.</div>
+        <button class="btn btn-elite" style="margin-top:40px; background: black; color: white;" onclick="location.reload()">UPLOAD & ARCHIVE</button>
+    </div>
+
+    <script>
+        let config = { role: '', shift: '', district: '', site: '' };
+        let timer = 0, pulseTimer = 0, siteInt, pulseInt;
+        let logs = [];
+        let masterVault = [];
+
+        function login() {
+            const id = document.getElementById('user-id').value.toUpperCase();
+            if (id === 'MIL-774') navigate('setup-screen');
+            else if (id === 'ADMIN-01') navigate('admin-screen');
+            else if (id === 'CLIENT-99') navigate('vault-screen');
+            else alert("PXE_ERROR: IDENTITY NOT RECOGNIZED");
+        }
+
+        function navigate(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+            document.getElementById(id).classList.add('active-screen');
+        }
+
+        function selectConfig(type, val) {
+            config[type] = val;
+            const prefix = type === 'role' ? 'role-' : 's-';
+            document.querySelectorAll(`[id^="${prefix}"]`).forEach(b => b.classList.remove('btn-selected'));
+            document.getElementById(prefix + val).classList.add('btn-selected');
+        }
+
+        function proceedSetup() {
+            if (!config.role || !config.shift) return alert("SELECT ROLE & SHIFT");
+            if (config.role === 'patrol') navigate('district-screen');
+            else loadSites('Stationary Mission');
+        }
+
+        function loadSites(region) {
+            config.district = region;
+            document.getElementById('region-header').innerText = region.toUpperCase();
+            const container = document.getElementById('sites-container');
+            container.innerHTML = '';
+            
+            const sites = config.role === 'patrol' ? ['Site A - North Gate', 'Site B - Perimeter', 'Site C - Dock'] : ['Plaza Static Post', 'Auto Mall Static 1'];
+            sites.forEach(site => {
+                let d = document.createElement('div');
+                d.className = 'list-item';
+                d.innerText = site;
+                d.onclick = () => launchConsole(site);
+                container.appendChild(d);
+            });
+            document.getElementById('site-back-btn').style.display = config.role === 'patrol' ? 'block' : 'none';
+            navigate('site-screen');
+        }
+
+        function launchConsole(site) {
+            config.site = site;
+            document.getElementById('active-site-display').innerText = site.toUpperCase();
+            logs = [];
+            document.getElementById('console-log').innerHTML = '';
+            timer = 0;
+            
+            // Site Clock
+            siteInt = setInterval(() => {
+                timer++;
+                let m = Math.floor((timer%3600)/60).toString().padStart(2,'0');
+                let s = (timer%60).toString().padStart(2,'0');
+                document.getElementById('site-clock').innerText = `TIME: 00:${m}:${s}`;
+            }, 1000);
+
+            // Pulse Timer (60s Patrol / 3600s Stationary)
+            const pulseLimit = config.role === 'patrol' ? 60 : 3600;
+            pulseTimer = pulseLimit;
+            pulseInt = setInterval(() => {
+                pulseTimer--;
+                let pm = Math.floor(pulseTimer/60).toString().padStart(2,'0');
+                let ps = (pulseTimer%60).toString().padStart(2,'0');
+                document.getElementById('pulse-clock').innerText = `${pm}:${ps}`;
+                
+                if (pulseTimer < 10) document.getElementById('pulse-warning').style.display = 'block';
+                if (pulseTimer <= 0) {
+                    autoNote("AUTOMATED PULSE: Site integrity check required.");
+                    pulseTimer = pulseLimit;
+                    document.getElementById('pulse-warning').style.display = 'none';
+                }
+            }, 1000);
+
+            navigate('console-screen');
+            autoNote("Mission Initialized. Telemetry Sync: 100%.");
+        }
+
+        function executeSnapshot() {
+            const narrations = [
+                "Visual analysis confirms perimeter integrity. All entry points secured.",
+                "Subject zone clear. No unauthorized personnel detected within field of view.",
+                "Tactical scan complete. Lighting systems nominal, no breaches noted.",
+                "High-value asset verification successful. GPS handshake confirmed."
+            ];
+            const randomNarr = narrations[Math.floor(Math.random() * narrations.length)];
+            autoNote(`[SNAPSHOT] Visual Intelligence: ${randomNarr}`);
+            pulseTimer = config.role === 'patrol' ? 60 : 3600; // Reset pulse after manual snap
+            document.getElementById('pulse-warning').style.display = 'none';
+        }
+
+        function autoNote(msg) {
+            const container = document.getElementById('console-log');
+            const now = new Date();
+            const entry = { time: now.toLocaleTimeString(), text: msg, stamp: now.toISOString() };
+            logs.push(entry);
+            
+            const d = document.createElement('div');
+            d.className = 'log-entry';
+            d.innerHTML = `<span style="color:var(--cyan)">[${entry.time}]</span> ${msg}<span class="stamp">PXE_STAMP: ${entry.stamp} | GPS: 38.6784, -121.2855</span>`;
+            container.prepend(d);
+        }
+
+        function exitSite() {
+            clearInterval(siteInt); clearInterval(pulseInt);
+            const reportMeta = `OFFICER: PXE-774 | ASSIGNMENT: ${config.role.toUpperCase()} | SHIFT: ${config.shift}<br>SITE: ${config.site} | DISTRICT: ${config.district}<br>DURATION: ${document.getElementById('site-clock').innerText}`;
+            document.getElementById('report-meta').innerHTML = reportMeta;
+            
+            const summary = `<b>AI MISSION SUMMARY:</b><br><br>Elite Operator PXE-774 conducted a highly disciplined ${config.role} deployment at ${config.site}. During the mission, the PXE Overwatch system maintained continuous situational awareness via automated telemetry pulses. All visual snapshots were processed through the AI-Narration engine, confirming a zero-breach status for the duration of the tour. The operator verified all secure access points and maintained a 100% telemetry link. Mission data has been successfully vaulted. Status: SITE SECURE.`;
+            document.getElementById('report-narrative').innerHTML = summary;
+            
+            // Vault the data
+            const vaultEntry = `<div class="list-item" style="font-size:11px;"><b>${new Date().toLocaleDateString()}</b> | ${config.site}<br>Role: ${config.role} | ${config.shift} <span style="float:right; color:var(--cyan);">VIEW REPORT</span></div>`;
+            document.getElementById('client-vault').innerHTML += vaultEntry;
+            document.getElementById('admin-vault').prepend(document.createElement('div'));
+            document.getElementById('admin-vault').firstChild.innerHTML = vaultEntry;
+
+            navigate('report-screen');
+        }
+    </script>
+</body>
+</html>
